@@ -2,6 +2,7 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 import plotly.express as px
+import time
 from google import genai
 
 # Page Configuration
@@ -25,6 +26,22 @@ dashboard_mode = st.sidebar.radio(
 
 if gemini_api_key:
     client = genai.Client(api_key=gemini_api_key)
+
+# Helper function with Auto-Retry for 503 / High Demand errors
+def call_gemini_with_retry(client, model_name, prompt, max_retries=3):
+    for attempt in range(max_retries):
+        try:
+            response = client.models.generate_content(
+                model=model_name,
+                contents=prompt,
+            )
+            return response
+        except Exception as e:
+            if "503" in str(e) or " UNAVAILABLE" in str(e):
+                if attempt < max_retries - 1:
+                    time.sleep(2 * (attempt + 1)) # Wait 2s, then 4s before retrying
+                    continue
+            raise e
 
 # ----------------- VIEW 1: STOCK DEEP DIVE -----------------
 if dashboard_mode == "Stock Deep Dive (10-Step)":
@@ -58,10 +75,7 @@ if dashboard_mode == "Stock Deep Dive (10-Step)":
                     Provide a structured markdown report including Valuation Inputs (Bear, Base, Bull targets), Peer Comparison, and Institutional Smart Money & Rebalancing Tracking.
                     """
                     
-                    response = client.models.generate_content(
-                        model='gemini-3.8-flash',
-                        contents=prompt,
-                    )
+                    response = call_gemini_with_retry(client, 'gemini-3.8-flash', prompt)
                     
                     st.success(f"Analysis successfully completed for {info.get('longName', ticker)}!")
                     st.markdown(response.text)
@@ -162,7 +176,7 @@ elif dashboard_mode == "🤖 AI Weekly & Monthly Stock Screener":
             st.error("Please enter your Gemini API Key in the sidebar.")
         else:
             count = "1-3 high-probability swing trading" if "Weekly" in timeframe else "4-6 fundamentally strong long-term"
-            with st.spinner(f"AI is scanning NSE market for {count} stock setups..."):
+            with st.spinner(f"AI is scanning NSE market for {count} stock setups (Auto-retrying if busy)..."):
                 try:
                     prompt = f"""
                     Act as an expert Indian Stock Market Quantitative Analyst and Institutional Trader.
@@ -180,16 +194,13 @@ elif dashboard_mode == "🤖 AI Weekly & Monthly Stock Screener":
                     Format the output cleanly using Markdown tables and bullet points.
                     """
                     
-                    response = client.models.generate_content(
-                        model='gemini-3.8-flash',
-                        contents=prompt,
-                    )
+                    response = call_gemini_with_retry(client, 'gemini-3.8-flash', prompt)
                     
                     st.success("Successfully scanned and generated trade setups!")
                     st.markdown(response.text)
                     
                 except Exception as e:
-                    st.error(f"Error running scan: {e}")
+                    st.error(f"Error running scan after retries: {e}")
 
 # ----------------- VIEW 4: BULK, BLOCK & INSIDER TRADING -----------------
 elif dashboard_mode == "🚨 Bulk, Block Deals & Insider Trading Tracker":
@@ -212,10 +223,7 @@ elif dashboard_mode == "🚨 Bulk, Block Deals & Insider Trading Tracker":
                     Present the information using structured tables, stock tickers, transaction types, and actionable insights.
                     """
                     
-                    response = client.models.generate_content(
-                        model='gemini-3.8-flash',
-                        contents=insider_prompt,
-                    )
+                    response = call_gemini_with_retry(client, 'gemini-3.8-flash', insider_prompt)
                     
                     st.success("Smart Money & Insider Data successfully analyzed!")
                     st.markdown(response.text)
@@ -238,7 +246,7 @@ else:
         if not gemini_api_key:
             st.error("Please enter your Gemini API Key in the sidebar.")
         else:
-            with st.spinner(f"Fetching real-time option chain data and computing smart money signals for {selected_index}..."):
+            with st.spinner(f"Fetching option chain data for {selected_index} (Auto-retrying if busy)..."):
                 try:
                     oc_prompt = f"""
                     Act as an expert Indian Derivatives Quantitative Analyst. Provide a professional live option chain intelligence report for **{selected_index}** in the exact format required by elite traders:
@@ -250,13 +258,10 @@ else:
                     Format cleanly using markdown tables and clear highlights.
                     """
                     
-                    response = client.models.generate_content(
-                        model='gemini-3.8-flash',
-                        contents=oc_prompt,
-                    )
+                    response = call_gemini_with_retry(client, 'gemini-3.8-flash', oc_prompt)
                     
                     st.success(f"Option Chain analysis successfully generated for {selected_index}!")
                     st.markdown(response.text)
                     
                 except Exception as e:
-                    st.error(f"Error fetching option chain data: {e}")
+                    st.error(f"Error fetching option chain data after retries: {e}")
