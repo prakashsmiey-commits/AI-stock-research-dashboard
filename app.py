@@ -250,9 +250,9 @@ else:
     try:
         stock_data = yf.Ticker(t_symbol)
         hist = stock_data.history(period="1d")
-        spot_price = float(hist['Close'].iloc[-1]) if not hist.empty else 22850.00
+        spot_price = float(hist['Close'].iloc[-1]) if not hist.empty else 54909.65
     except:
-        spot_price = 22850.00
+        spot_price = 54909.65 if symbol == "BANKNIFTY" else 22850.00
 
     st.markdown("---")
     
@@ -283,12 +283,13 @@ else:
     # Strike-wise Call & Put Build-up Matrix Table using Pandas Styler
     st.markdown("### 📊 Strike-wise Call & Put Build-up Matrix")
     
-    atm = round(spot_price / 50) * 50
+    atm = round(spot_price / 100) * 100 if symbol == "BANKNIFTY" else round(spot_price / 50) * 50
     table_data = []
     import random
     
     for i in range(-strikes_range, strikes_range + 1):
-        strike = atm + (i * 50)
+        step = 100 if symbol == "BANKNIFTY" else 50
+        strike = atm + (i * step)
         c_oi = random.randint(1000, 150000)
         c_chg_oi = random.randint(-20000, 45000)
         c_buildup = "LB" if c_chg_oi > 0 else "SC"
@@ -323,7 +324,7 @@ else:
 
     df_option = pd.DataFrame(table_data)
 
-    # Styling function to color LB (Green) and SB (Red) cleanly
+    # Styling function to color LB (Green) and SB (Red) cleanly (using .map for latest pandas compatibility)
     def highlight_buildup(val):
         if val == "LB":
             return 'background-color: #d4edda; color: #155724; font-weight: bold;'
@@ -335,7 +336,7 @@ else:
             return 'background-color: #fff3cd; color: #856404; font-weight: bold;'
         return ''
 
-    styled_df = df_option.style.applymap(highlight_buildup, subset=['Call Build-up', 'Put Build-up'])
+    styled_df = df_option.style.map(highlight_buildup, subset=['Call Build-up', 'Put Build-up'])
     
     st.dataframe(styled_df, use_container_width=True, height=520)
 
