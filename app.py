@@ -10,7 +10,7 @@ gemini_api_key = st.sidebar.text_input("Enter Gemini API Key", type="password")
 
 if gemini_api_key:
     genai.configure(api_key=gemini_api_key)
-    model = genai.GenerativeModel('models/gemini-pro')
+    model = genai.GenerativeModel('gemini-2.5-flash')
 
 ticker_symbol = st.sidebar.text_input("Enter Stock Ticker (e.g., RELIANCE.NS, TCS.NS)", value="RELIANCE.NS")
 investment_horizon = st.sidebar.selectbox("Investment Horizon", ["SHORT", "MEDIUM", "LONG"])
