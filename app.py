@@ -235,7 +235,8 @@ else:
     with c2:
         expiry_date = st.selectbox("Expiry", ["03-Nov-2026", "10-Nov-2026", "17-Nov-2026"])
     with c3:
-        auto_refresh = st.selectbox("Refresh", ["Off", "10 sec", "30 sec", "60 sec"])
+        # Default set to 30 sec for live auto-refresh
+        auto_refresh = st.selectbox("Refresh", ["30 sec", "10 sec", "60 sec", "Off"], index=0)
     with c4:
         st.markdown("<br>", unsafe_allow_html=True)
         refresh_now = st.button("🔄 Refresh now")
@@ -256,9 +257,9 @@ else:
 
     st.markdown("---")
     
-    # Summary Metrics Row (Top Bar Layout matching image)
+    # Summary Metrics Row
     m1, m2, m3, m4, m5, m6, m7, m8 = st.columns(8)
-    m1.metric(label=f"{symbol}\nSpot {spot_price:,.2f}", value="")
+    m1.metric(label=f"{symbol} Spot", value=f"{spot_price:,.2f}")
     m2.metric(label="EXPIRY", value=expiry_date)
     m3.metric(label="PCR (OI)", value="1.32")
     m4.metric(label="PCR (CHG OI)", value="4.02")
@@ -324,8 +325,8 @@ else:
     df_option = pd.DataFrame(table_data)
     st.dataframe(df_option, use_container_width=True, height=520)
 
-    # Auto-refresh logic implementation
+    # Auto-refresh logic implementation (Default 30 sec)
     if auto_refresh != "Off":
-        seconds = 10 if "10" in auto_refresh else (30 if "30" in auto_refresh else 60)
+        seconds = 30 if "30" in auto_refresh else (10 if "10" in auto_refresh else 60)
         time.sleep(seconds)
         st.rerun()
