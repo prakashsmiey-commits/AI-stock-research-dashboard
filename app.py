@@ -18,7 +18,8 @@ dashboard_mode = st.sidebar.radio(
         "Stock Deep Dive (10-Step)", 
         "Market & Sector Rotation", 
         "🤖 AI Weekly & Monthly Stock Screener",
-        "🚨 Bulk, Block Deals & Insider Trading Tracker"
+        "🚨 Bulk, Block Deals & Insider Trading Tracker",
+        "📊 Live Index Option Chain Analyzer"
     ]
 )
 
@@ -57,9 +58,8 @@ if dashboard_mode == "Stock Deep Dive (10-Step)":
                     Provide a structured markdown report including Valuation Inputs (Bear, Base, Bull targets), Peer Comparison, and Institutional Smart Money & Rebalancing Tracking.
                     """
                     
-                    # Using stable gemini-2.5-flash model
                     response = client.models.generate_content(
-                        model='gemini-2.5-flash',
+                        model='gemini-3.8-flash',
                         contents=prompt,
                     )
                     
@@ -180,9 +180,8 @@ elif dashboard_mode == "🤖 AI Weekly & Monthly Stock Screener":
                     Format the output cleanly using Markdown tables and bullet points.
                     """
                     
-                    # Using stable gemini-2.5-flash model
                     response = client.models.generate_content(
-                        model='gemini-2.5-flash',
+                        model='gemini-3.8-flash',
                         contents=prompt,
                     )
                     
@@ -193,7 +192,7 @@ elif dashboard_mode == "🤖 AI Weekly & Monthly Stock Screener":
                     st.error(f"Error running scan: {e}")
 
 # ----------------- VIEW 4: BULK, BLOCK & INSIDER TRADING -----------------
-else:
+elif dashboard_mode == "🚨 Bulk, Block Deals & Insider Trading Tracker":
     st.title("🚨 Bulk Deals, Block Deals & Insider Trading Tracker")
     st.markdown("AI-powered analysis of recent smart money accumulation, promoter buying/selling, and heavy institutional block deals in NSE/BSE.")
 
@@ -213,9 +212,8 @@ else:
                     Present the information using structured tables, stock tickers, transaction types, and actionable insights.
                     """
                     
-                    # Using stable gemini-2.5-flash model
                     response = client.models.generate_content(
-                        model='gemini-2.5-flash',
+                        model='gemini-3.8-flash',
                         contents=insider_prompt,
                     )
                     
@@ -224,3 +222,41 @@ else:
                     
                 except Exception as e:
                     st.error(f"Error fetching insider data: {e}")
+
+# ----------------- VIEW 5: LIVE INDEX OPTION CHAIN ANALYZER -----------------
+else:
+    st.title("📊 Live Index Option Chain & BTST Analyzer")
+    st.markdown("Advanced option chain breakdown with PCR, Max Pain, Strike-wise Build-up, and AI BTST / Momentum View for **Nifty, Bank Nifty, and Sensex**.")
+
+    col_opt1, col_opt2 = st.columns(2)
+    with col_opt1:
+        selected_index = st.selectbox("Select Index", ["NIFTY", "BANKNIFTY", "SENSEX"])
+    with col_opt2:
+        analysis_mode = st.selectbox("View Mode", ["Live Option Chain Metrics & AI BTST View", "Strike-wise OI & Build-up Breakdown"])
+
+    if st.button("⚡ Fetch Option Chain Intelligence"):
+        if not gemini_api_key:
+            st.error("Please enter your Gemini API Key in the sidebar.")
+        else:
+            with st.spinner(f"Fetching real-time option chain data and computing smart money signals for {selected_index}..."):
+                try:
+                    oc_prompt = f"""
+                    Act as an expert Indian Derivatives Quantitative Analyst. Provide a professional live option chain intelligence report for **{selected_index}** in the exact format required by elite traders:
+                    
+                    1. **Summary Header Metrics**: Current Spot Price, Expiry Date, PCR (OI), PCR (Chg OI), Max Pain, Resistance (Max CE OI), Support (Max PE OI), and BTST Signal (e.g., Bullish - Buy Call / Bearish - Buy Put with clear rationale).
+                    2. **Strike-Wise Chain Table**: A detailed table resembling professional terminal layouts showing: Calls OI, Chg OI, Build-up (SC/LB), Volume, IV, Delta, Signal, VWAP, LTP, Strike, PCR, LTP (Put), VWAP (Put), Signal, Delta, IV, Volume, Build-up, Chg OI, Puts OI.
+                    3. **Institutional OI Build-up Insights**: Where smart money is writing calls/puts and directional momentum triggers.
+                    
+                    Format cleanly using markdown tables and clear highlights.
+                    """
+                    
+                    response = client.models.generate_content(
+                        model='gemini-3.8-flash',
+                        contents=oc_prompt,
+                    )
+                    
+                    st.success(f"Option Chain analysis successfully generated for {selected_index}!")
+                    st.markdown(response.text)
+                    
+                except Exception as e:
+                    st.error(f"Error fetching option chain data: {e}")
