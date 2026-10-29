@@ -57,6 +57,7 @@ if dashboard_mode == "Stock Deep Dive (10-Step)":
                     Provide a structured markdown report including Valuation Inputs (Bear, Base, Bull targets), Peer Comparison, and Institutional Smart Money & Rebalancing Tracking.
                     """
                     
+                    # Using stable gemini-2.5-flash model
                     response = client.models.generate_content(
                         model='gemini-2.5-flash',
                         contents=prompt,
@@ -76,7 +77,6 @@ elif dashboard_mode == "Market & Sector Rotation":
     if st.button("🔄 Fetch All Sectors & Indices Data"):
         with st.spinner("Loading all market sectors and calculating relative momentum..."):
             try:
-                # All Major NSE Sectors & Indices mapping via Yahoo Finance
                 indices = {
                     "Nifty 50": "^NSEI",
                     "Nifty 500": "^CRSLIST",
@@ -180,8 +180,9 @@ elif dashboard_mode == "🤖 AI Weekly & Monthly Stock Screener":
                     Format the output cleanly using Markdown tables and bullet points.
                     """
                     
+                    # Using stable gemini-2.5-flash model
                     response = client.models.generate_content(
-                        model='gemini-3.8-flash',
+                        model='gemini-2.5-flash',
                         contents=prompt,
                     )
                     
@@ -212,8 +213,9 @@ else:
                     Present the information using structured tables, stock tickers, transaction types, and actionable insights.
                     """
                     
+                    # Using stable gemini-2.5-flash model
                     response = client.models.generate_content(
-                        model='gemini-3.8-flash',
+                        model='gemini-2.5-flash',
                         contents=insider_prompt,
                     )
                     
