@@ -7,6 +7,53 @@ import time
 # Page Configuration
 st.set_page_config(page_title="AI Stock & Market Intelligence Dashboard", layout="wide")
 
+# Custom CSS for Professional Terminal & Blinking Effect
+st.markdown("""
+<style>
+    .terminal-header {
+        background-color: #1e222d;
+        padding: 10px;
+        border-radius: 5px;
+        color: white;
+        font-weight: bold;
+    }
+    @keyframes blink {
+        0% { opacity: 1; }
+        50% { opacity: 0.4; }
+        100% { opacity: 1; }
+    .blink-lb {
+        background-color: #d4edda;
+        color: #155724;
+        padding: 3px 6px;
+        border-radius: 4px;
+        font-weight: bold;
+        animation: blink 1.5s infinite;
+    }
+    .blink-sb {
+        background-color: #f8d7da;
+        color: #721c24;
+        padding: 3px 6px;
+        border-radius: 4px;
+        font-weight: bold;
+        animation: blink 1.5s infinite;
+    }
+    .badge-sc {
+        background-color: #cce5ff;
+        color: #004085;
+        padding: 3px 6px;
+        border-radius: 4px;
+        font-weight: bold;
+    }
+    .badge-lu {
+        background-color: #fff3cd;
+        color: #856404;
+        padding: 3px 6px;
+        border-radius: 4px;
+        font-weight: bold;
+    }
+</style>
+""", unsafe_allow_html=True)
+
 # Sidebar - Configuration
 st.sidebar.markdown("## ⚙️ Configuration & API Setup")
 gemini_api_key = st.sidebar.text_input("Enter Gemini API Key", type="password")
@@ -226,16 +273,15 @@ elif dashboard_mode == "🚨 Bulk, Block Deals & Insider Trading Tracker":
 
 # ----------------- VIEW 5: LIVE INDEX OPTION CHAIN TERMINAL -----------------
 else:
-    st.title("📊 Option Chain Live Terminal")
+    st.title("📊 Option Chain Live Terminal (Advance)")
     
-    # Top Control Bar (Exact match to reference image)
+    # Top Control Bar
     c1, c2, c3, c4, c5, c6 = st.columns([2, 2, 2, 2, 2, 2])
     with c1:
         symbol = st.selectbox("Symbol", ["NIFTY", "BANKNIFTY", "SENSEX"], key="oc_symbol")
     with c2:
         expiry_date = st.selectbox("Expiry", ["03-Nov-2026", "10-Nov-2026", "17-Nov-2026"])
     with c3:
-        # Default set to 30 sec for live auto-refresh
         auto_refresh = st.selectbox("Refresh", ["30 sec", "10 sec", "60 sec", "Off"], index=0)
     with c4:
         st.markdown("<br>", unsafe_allow_html=True)
@@ -281,11 +327,11 @@ else:
         fig = px.line(chart_df, x="Strike Offset", y=["Spot", "Max Pain"], title="Spot vs Max Pain Dynamics")
         st.plotly_chart(fig, use_container_width=True)
 
-    # Strike-wise Call & Put Build-up Matrix Table
-    st.markdown("### 📊 Strike-wise Call & Put Build-up Matrix")
+    # Strike-wise Call & Put Build-up Matrix Table with Blinking HTML tags
+    st.markdown("### 📊 Strike-wise Call & Put Build-up Matrix (Live Blinking Signals)")
     
     atm = round(spot_price / 50) * 50
-    table_data = []
+    table_html_rows = []
     import random
     
     for i in range(-strikes_range, strikes_range + 1):
@@ -305,25 +351,58 @@ else:
         p_ltp = round(max(5.0, (strike - spot_price) + random.uniform(100, 500)), 2)
         pcr_val = round(p_oi / (c_oi if c_oi > 0 else 1), 2)
 
-        table_data.append({
-            "Calls OI": f"{c_oi:,}",
-            "Chg OI": f"{c_chg_oi:,}",
-            "Build-up": c_buildup,
-            "Volume": f"{c_vol:,}",
-            "IV": c_iv,
-            "LTP": c_ltp,
-            "Strike": strike,
-            "PCR": pcr_val,
-            "LTP (Put)": p_ltp,
-            "IV (Put)": p_iv,
-            "Volume (Put)": f"{p_vol:,}",
-            "Build-up (Put)": p_buildup,
-            "Chg OI (Put)": f"{c_chg_oi:,}",
-            "Puts OI": f"{p_oi:,}"
-        })
+        # HTML formatting with blinking CSS classes for LB and SB
+        c_badge = f'<span class="blink-lb">LB</span>' if c_buildup == "LB" else f'<span class="badge-sc">SC</span>'
+        p_badge = f'<span class="blink-sb">SB</span>' if p_buildup == "SB" else f'<span class="badge-lu">LU</span>'
 
-    df_option = pd.DataFrame(table_data)
-    st.dataframe(df_option, use_container_width=True, height=520)
+        table_html_rows.append(f"""
+            <tr>
+                <td>{c_oi:,}</td>
+                <td>{c_chg_oi:,}</td>
+                <td>{c_badge}</td>
+                <td>{c_vol:,}</td>
+                <td>{c_iv}</td>
+                <td>{c_ltp}</td>
+                <td style="background-color: #fff3cd; font-weight: bold; text-align: center;">{strike}</td>
+                <td>{pcr_val}</td>
+                <td>{p_ltp}</td>
+                <td>{p_iv}</td>
+                <td>{p_vol:,}</td>
+                <td>{p_badge}</td>
+                <td>{p_chg_oi:,}</td>
+                <td>{p_oi:,}</td>
+            </tr>
+        """)
+
+    # Render custom HTML Table for real-time visual blinking
+    table_html = f"""
+    <div style="max-height: 520px; overflow-y: auto;">
+    <table style="width: 100%; text-align: right; font-size: 13px; border-collapse: collapse;">
+        <thead>
+            <tr style="background-color: #f1f3f5; color: #333; position: sticky; top: 0;">
+                <th style="padding: 8px;">Calls OI</th>
+                <th>Chg OI</th>
+                <th>Build-up</th>
+                <th>Volume</th>
+                <th>IV</th>
+                <th>LTP</th>
+                <th style="text-align: center; background-color: #e2e6ea;">Strike</th>
+                <th>PCR</th>
+                <th>LTP (Put)</th>
+                <th>IV (Put)</th>
+                <th>Volume (Put)</th>
+                <th>Build-up</th>
+                <th>Chg OI</th>
+                <th>Puts OI</th>
+            </tr>
+        </thead>
+        <tbody>
+            {"".join(table_html_rows)}
+        </tbody>
+    </table>
+    </div>
+    """
+    st.markdown(table_html, unsafe_allow_html=True)
 
     # Auto-refresh logic implementation (Default 30 sec)
     if auto_refresh != "Off":
