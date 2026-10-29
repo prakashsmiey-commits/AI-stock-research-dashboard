@@ -76,6 +76,7 @@ elif dashboard_mode == "Market & Sector Rotation":
     if st.button("🔄 Fetch Live Market & Index Data"):
         with st.spinner("Loading broad market indices and calculating momentum..."):
             try:
+                # Complete Broad Market & Sectoral Indices mapping via Yahoo Finance
                 indices = {
                     "Nifty 50": "^NSEI",
                     "Nifty 500": "^CRSLIST",
@@ -84,7 +85,9 @@ elif dashboard_mode == "Market & Sector Rotation":
                     "Nifty Bank": "^NSEBANK",
                     "Nifty Auto": "^CNXAUTO",
                     "Nifty Pharma": "^CNXPHARMA",
-                    "Nifty Metal": "^CNXMETAL"
+                    "Nifty Metal": "^CNXMETAL",
+                    "Nifty FMCG": "^CNXFMCG",
+                    "Nifty Energy": "^CNXENERGY"
                 }
                 
                 perf_data = []
@@ -93,19 +96,25 @@ elif dashboard_mode == "Market & Sector Rotation":
                     if not df.empty:
                         if isinstance(df.columns, pd.MultiIndex):
                             close_col = [c for c in df.columns if 'Close' in c][0]
-                            prices = df[close_col]
+                            prices = df[close_col].dropna()
                         else:
-                            prices = df['Close']
+                            prices = df['Close'].dropna()
                         
-                        ret_1m = ((prices.iloc[-1] - prices.iloc[-22]) / prices.iloc[-22]) * 100 if len(prices) >= 22 else 0
-                        ret_3m = ((prices.iloc[-1] - prices.iloc[0]) / prices.iloc[0]) * 100 if len(prices) > 0 else 0
-                        
-                        if hasattr(ret_1m, "item"): ret_1m = ret_1m.item()
-                        if hasattr(ret_3m, "item"): ret_3m = ret_3m.item()
-                        
-                        perf_data.append({"Index / Sector": name, "1M Return (%)": round(ret_1m, 2), "3M Return (%)": round(ret_3m, 2)})
+                        if len(prices) > 1:
+                            idx_1m = -22 if len(prices) >= 22 else 0
+                            ret_1m = ((prices.iloc[-1] - prices.iloc[idx_1m]) / prices.iloc[idx_1m]) * 100
+                            ret_3m = ((prices.iloc[-1] - prices.iloc[0]) / prices.iloc[0]) * 100
+                            
+                            if hasattr(ret_1m, "item"): ret_1m = ret_1m.item()
+                            if hasattr(ret_3m, "item"): ret_3m = ret_3m.item()
+                            
+                            perf_data.append({
+                                "Index / Sector": name, 
+                                "1M Return (%)": round(ret_1m, 2), 
+                                "3M Return (%)": round(ret_3m, 2)
+                            })
 
-                df_indices = pd.DataFrame(perf_data)
+                df_indices = pd.DataFrame(perf_data).dropna()
                 
                 st.subheader("📈 Market Scorecard & Sentiment")
                 m_col1, m_col2, m_col3 = st.columns(3)
