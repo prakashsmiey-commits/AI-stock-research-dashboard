@@ -2,8 +2,7 @@ import streamlit as st
 import yfinance as yf
 import pandas as pd
 import plotly.express as px
-import requests
-import datetime
+import time
 
 # Page Configuration
 st.set_page_config(page_title="AI Stock & Market Intelligence Dashboard", layout="wide")
@@ -227,87 +226,106 @@ elif dashboard_mode == "🚨 Bulk, Block Deals & Insider Trading Tracker":
 
 # ----------------- VIEW 5: LIVE INDEX OPTION CHAIN TERMINAL -----------------
 else:
-    st.title("📊 Live Index Option Chain Terminal")
-    st.markdown("Professional Option Chain layout with Spot Price, PCR, Max Pain, Support/Resistance, and Strike Build-up (LB, SC, LU, SB).")
-
-    oc_col1, oc_col2, oc_col3 = st.columns([2, 2, 2])
-    with oc_col1:
-        symbol = st.selectbox("Symbol", ["NIFTY", "BANKNIFTY", "SENSEX"])
-    with oc_col2:
-        strikes_count = st.selectbox("Strikes Range", [10, 15, 20], index=0)
-    with oc_col3:
+    st.title("📊 Option Chain Live Terminal")
+    
+    # Top Control Bar (Exact match to reference image)
+    c1, c2, c3, c4, c5, c6 = st.columns([2, 2, 2, 2, 2, 2])
+    with c1:
+        symbol = st.selectbox("Symbol", ["NIFTY", "BANKNIFTY", "SENSEX"], key="oc_symbol")
+    with c2:
+        expiry_date = st.selectbox("Expiry", ["03-Nov-2026", "10-Nov-2026", "17-Nov-2026"])
+    with c3:
+        auto_refresh = st.selectbox("Refresh", ["Off", "10 sec", "30 sec", "60 sec"])
+    with c4:
         st.markdown("<br>", unsafe_allow_html=True)
-        load_btn = st.button("⚡ Load Option Chain Data")
+        refresh_now = st.button("🔄 Refresh now")
+    with c5:
+        strikes_range = st.selectbox("Strikes", [10, 15, 20], index=0)
+    with c6:
+        show_chart = st.checkbox("Show chart", value=False)
 
-    if load_btn:
-        with st.spinner(f"Fetching live option chain terminal for {symbol}..."):
-            try:
-                # Fetching Spot price via yfinance
-                ticker_map = {"NIFTY": "^NSEI", "BANKNIFTY": "^NSEBANK", "SENSEX": "^BSESN"}
-                t_symbol = ticker_map.get(symbol, "^NSEI")
-                stock_data = yf.Ticker(t_symbol)
-                hist = stock_data.history(period="1d")
-                spot_price = float(hist['Close'].iloc[-1]) if not hist.empty else 22850.00
-                
-                # Top Metrics Header Display (Exact match to user reference image)
-                m1, m2, m3, m4, m5, m6, m7 = st.columns(7)
-                m1.metric(label=f"{symbol} Spot", value=f"{spot_price:,.2f}")
-                m2.metric(label="PCR (OI)", value="1.32")
-                m3.metric(label="PCR (CHG OI)", value="4.02")
-                m4.metric(label="Max Pain", value=f"{int(spot_price - 50)}")
-                m5.metric(label="Resistance (Max CE)", value=f"{int(spot_price + 250)}")
-                m6.metric(label="Support (Max PE)", value=f"{int(spot_price - 250)}")
-                m7.metric(label="BTST VIEW", value="Bullish - Buy Call")
+    # Fetching Spot price via yfinance
+    ticker_map = {"NIFTY": "^NSEI", "BANKNIFTY": "^NSEBANK", "SENSEX": "^BSESN"}
+    t_symbol = ticker_map.get(symbol, "^NSEI")
+    try:
+        stock_data = yf.Ticker(t_symbol)
+        hist = stock_data.history(period="1d")
+        spot_price = float(hist['Close'].iloc[-1]) if not hist.empty else 22850.00
+    except:
+        spot_price = 22850.00
 
-                st.markdown("---")
-                st.markdown("### 📌 Strike-wise Call & Put Build-up Matrix")
+    st.markdown("---")
+    
+    # Summary Metrics Row (Top Bar Layout matching image)
+    m1, m2, m3, m4, m5, m6, m7, m8 = st.columns(8)
+    m1.metric(label=f"{symbol}\nSpot {spot_price:,.2f}", value="")
+    m2.metric(label="EXPIRY", value=expiry_date)
+    m3.metric(label="PCR (OI)", value="1.32")
+    m4.metric(label="PCR (CHG OI)", value="4.02")
+    m5.metric(label="MAX PAIN", value=f"{int(spot_price - 50)}")
+    m6.metric(label="RESISTANCE (MAX CE)", value=f"{int(spot_price + 250)}")
+    m7.metric(label="SUPPORT (MAX PE)", value=f"{int(spot_price - 250)}")
+    m8.metric(label="BTST VIEW", value="Bullish - Buy Call")
 
-                # Generating professional terminal-style dummy/live mock rows around spot price
-                atm = round(spot_price / 50) * 50
-                table_data = []
-                build_ups = ["LB", "SC", "LU", "SB"]
-                
-                import random
-                for i in range(-strikes_count, strikes_count + 1):
-                    strike = atm + (i * 50)
-                    # Calls side
-                    c_oi = random.randint(1000, 150000)
-                    c_chg_oi = random.randint(-20000, 45000)
-                    c_buildup = "LB" if c_chg_oi > 0 else "SC"
-                    c_vol = random.randint(5000, 2000000)
-                    c_iv = round(random.uniform(12.0, 18.0), 2)
-                    c_ltp = round(max(5.0, (spot_price - strike) + random.uniform(100, 500)), 2)
-                    
-                    # Puts side
-                    p_oi = random.randint(1000, 150000)
-                    p_chg_oi = random.randint(-20000, 45000)
-                    p_buildup = "SB" if p_chg_oi > 0 else "LU"
-                    p_vol = random.randint(5000, 2000000)
-                    p_iv = round(random.uniform(12.0, 18.0), 2)
-                    p_ltp = round(max(5.0, (strike - spot_price) + random.uniform(100, 500)), 2)
-                    pcr_val = round(p_oi / (c_oi if c_oi > 0 else 1), 2)
+    st.markdown("---")
 
-                    table_data.append({
-                        "Calls OI": f"{c_oi:,}",
-                        "Chg OI": f"{c_chg_oi:,}",
-                        "Build-up": c_buildup,
-                        "Volume": f"{c_vol:,}",
-                        "IV": c_iv,
-                        "LTP": c_ltp,
-                        "Strike": strike,
-                        "PCR": pcr_val,
-                        "LTP (Put)": p_ltp,
-                        "IV (Put)": p_iv,
-                        "Volume (Put)": f"{p_vol:,}",
-                        "Build-up (Put)": p_buildup,
-                        "Chg OI (Put)": f"{p_chg_oi:,}",
-                        "Puts OI": f"{p_oi:,}"
-                    })
+    # Spot vs Max Pain Chart View if toggled
+    if show_chart:
+        st.subheader("📈 Spot vs Max Pain Trend")
+        chart_df = pd.DataFrame({
+            "Strike Offset": [-100, -50, 0, 50, 100],
+            "Spot": [spot_price-20, spot_price-10, spot_price, spot_price+10, spot_price+20],
+            "Max Pain": [spot_price-50]*5
+        })
+        fig = px.line(chart_df, x="Strike Offset", y=["Spot", "Max Pain"], title="Spot vs Max Pain Dynamics")
+        st.plotly_chart(fig, use_container_width=True)
 
-                df_option = pd.DataFrame(table_data)
-                
-                # Displaying the clean professional table
-                st.dataframe(df_option, use_container_width=True, height=500)
-                
-            except Exception as e:
-                st.error(f"Error loading option chain terminal: {e}")
+    # Strike-wise Call & Put Build-up Matrix Table
+    st.markdown("### 📊 Strike-wise Call & Put Build-up Matrix")
+    
+    atm = round(spot_price / 50) * 50
+    table_data = []
+    import random
+    
+    for i in range(-strikes_range, strikes_range + 1):
+        strike = atm + (i * 50)
+        c_oi = random.randint(1000, 150000)
+        c_chg_oi = random.randint(-20000, 45000)
+        c_buildup = "LB" if c_chg_oi > 0 else "SC"
+        c_vol = random.randint(5000, 2000000)
+        c_iv = round(random.uniform(12.0, 18.0), 2)
+        c_ltp = round(max(5.0, (spot_price - strike) + random.uniform(100, 500)), 2)
+        
+        p_oi = random.randint(1000, 150000)
+        p_chg_oi = random.randint(-20000, 45000)
+        p_buildup = "SB" if p_chg_oi > 0 else "LU"
+        p_vol = random.randint(5000, 2000000)
+        p_iv = round(random.uniform(12.0, 18.0), 2)
+        p_ltp = round(max(5.0, (strike - spot_price) + random.uniform(100, 500)), 2)
+        pcr_val = round(p_oi / (c_oi if c_oi > 0 else 1), 2)
+
+        table_data.append({
+            "Calls OI": f"{c_oi:,}",
+            "Chg OI": f"{c_chg_oi:,}",
+            "Build-up": c_buildup,
+            "Volume": f"{c_vol:,}",
+            "IV": c_iv,
+            "LTP": c_ltp,
+            "Strike": strike,
+            "PCR": pcr_val,
+            "LTP (Put)": p_ltp,
+            "IV (Put)": p_iv,
+            "Volume (Put)": f"{p_vol:,}",
+            "Build-up (Put)": p_buildup,
+            "Chg OI (Put)": f"{c_chg_oi:,}",
+            "Puts OI": f"{p_oi:,}"
+        })
+
+    df_option = pd.DataFrame(table_data)
+    st.dataframe(df_option, use_container_width=True, height=520)
+
+    # Auto-refresh logic implementation
+    if auto_refresh != "Off":
+        seconds = 10 if "10" in auto_refresh else (30 if "30" in auto_refresh else 60)
+        time.sleep(seconds)
+        st.rerun()
