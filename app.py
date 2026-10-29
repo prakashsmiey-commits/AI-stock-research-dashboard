@@ -70,24 +70,30 @@ if dashboard_mode == "Stock Deep Dive (10-Step)":
 
 # ----------------- VIEW 2: MARKET & SECTOR ROTATION -----------------
 elif dashboard_mode == "Market & Sector Rotation":
-    st.title("🌐 Market Intelligence, Sentiment & Sector/Index Rotation")
-    st.markdown("Real-time Broad Market (Nifty 50, 500, Smallcap), Fear & Greed Sentiment, and Momentum Matrix.")
+    st.title("🌐 Complete Market Intelligence & Sector Rotation Matrix")
+    st.markdown("Real-time tracking of all NSE Broad Markets, Sectoral, and Thematic Indices.")
 
-    if st.button("🔄 Fetch Live Market & Index Data"):
-        with st.spinner("Loading broad market indices and calculating momentum..."):
+    if st.button("🔄 Fetch All Sectors & Indices Data"):
+        with st.spinner("Loading all market sectors and calculating relative momentum..."):
             try:
-                # Complete Broad Market & Sectoral Indices mapping via Yahoo Finance
+                # All Major NSE Sectors & Indices mapping via Yahoo Finance
                 indices = {
                     "Nifty 50": "^NSEI",
                     "Nifty 500": "^CRSLIST",
-                    "Nifty Smallcap 100": "^NSESMCAP",
+                    "Nifty Smallcap": "^NSESMCAP",
+                    "Bank Nifty": "^NSEBANK",
+                    "FinNifty": "NIFTY_FIN_SERVICE.NS",
+                    "Midcap Select": "NIFTY_MID_SELECT.NS",
                     "Nifty IT": "^CNXIT",
-                    "Nifty Bank": "^NSEBANK",
                     "Nifty Auto": "^CNXAUTO",
                     "Nifty Pharma": "^CNXPHARMA",
                     "Nifty Metal": "^CNXMETAL",
                     "Nifty FMCG": "^CNXFMCG",
-                    "Nifty Energy": "^CNXENERGY"
+                    "Nifty Energy": "^CNXENERGY",
+                    "Nifty Media": "^CNXMEDIA",
+                    "Nifty Infra": "^CNXINFRA",
+                    "Nifty Realty": "CNXREALTY.NS",
+                    "Nifty PSU Bank": "NIFTY_PSU_BANK.NS"
                 }
                 
                 perf_data = []
@@ -126,19 +132,19 @@ elif dashboard_mode == "Market & Sector Rotation":
                     st.metric(label="Institutional Flow Trend", value="Positive FII Inflow", delta="Strong")
 
                 st.markdown("---")
-                st.subheader("🔄 Market & Sector Rotation Momentum Matrix")
+                st.subheader("🔄 Complete Sector Rotation Momentum Matrix")
                 
                 fig = px.scatter(
                     df_indices, x="1M Return (%)", y="3M Return (%)", text="Index / Sector",
-                    size=[20]*len(df_indices), color="3M Return (%)",
+                    size=[25]*len(df_indices), color="3M Return (%)",
                     color_continuous_scale="Viridis",
-                    title="Rotation Quadrant (1M vs 3M Relative Performance)"
+                    title="All Sectors Rotation Quadrant (1M vs 3M Relative Performance)"
                 )
                 fig.update_traces(textposition='top center')
-                fig.update_layout(height=500)
+                fig.update_layout(height=600)
                 st.plotly_chart(fig, use_container_width=True)
                 
-                st.subheader("📊 Performance Table")
+                st.subheader("📊 All Sectors Performance Table")
                 st.dataframe(df_indices, use_container_width=True)
 
             except Exception as e:
