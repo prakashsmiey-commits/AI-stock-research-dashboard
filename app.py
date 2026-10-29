@@ -7,49 +7,6 @@ import time
 # Page Configuration
 st.set_page_config(page_title="AI Stock & Market Intelligence Dashboard", layout="wide")
 
-# Custom CSS for Professional Terminal & Blinking Effect
-st.markdown("""
-<style>
-    @keyframes blink {
-        0% { opacity: 1; }
-        50% { opacity: 0.3; }
-        100% { opacity: 1; }
-    }
-    .blink-lb {
-        background-color: #d4edda;
-        color: #155724;
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-weight: bold;
-        animation: blink 1.2s infinite;
-        display: inline-block;
-    }
-    .blink-sb {
-        background-color: #f8d7da;
-        color: #721c24;
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-weight: bold;
-        animation: blink 1.2s infinite;
-        display: inline-block;
-    }
-    .badge-sc {
-        background-color: #cce5ff;
-        color: #004085;
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-weight: bold;
-    }
-    .badge-lu {
-        background-color: #fff3cd;
-        color: #856404;
-        padding: 2px 6px;
-        border-radius: 4px;
-        font-weight: bold;
-    }
-</style>
-""", unsafe_allow_html=True)
-
 # Sidebar - Configuration
 st.sidebar.markdown("## ⚙️ Configuration & API Setup")
 gemini_api_key = st.sidebar.text_input("Enter Gemini API Key", type="password")
@@ -323,11 +280,11 @@ else:
         fig = px.line(chart_df, x="Strike Offset", y=["Spot", "Max Pain"], title="Spot vs Max Pain Dynamics")
         st.plotly_chart(fig, use_container_width=True)
 
-    # Strike-wise Call & Put Build-up Matrix Table with Blinking HTML tags
-    st.markdown("### 📊 Strike-wise Call & Put Build-up Matrix (Live Blinking Signals)")
+    # Strike-wise Call & Put Build-up Matrix Table using Pandas Styler
+    st.markdown("### 📊 Strike-wise Call & Put Build-up Matrix")
     
     atm = round(spot_price / 50) * 50
-    table_rows_html = ""
+    table_data = []
     import random
     
     for i in range(-strikes_range, strikes_range + 1):
@@ -347,57 +304,40 @@ else:
         p_ltp = round(max(5.0, (strike - spot_price) + random.uniform(100, 500)), 2)
         pcr_val = round(p_oi / (c_oi if c_oi > 0 else 1), 2)
 
-        c_badge = f'<span class="blink-lb">LB</span>' if c_buildup == "LB" else f'<span class="badge-sc">SC</span>'
-        p_badge = f'<span class="blink-sb">SB</span>' if p_buildup == "SB" else f'<span class="badge-lu">LU</span>'
+        table_data.append({
+            "Calls OI": f"{c_oi:,}",
+            "Chg OI": f"{c_chg_oi:,}",
+            "Call Build-up": c_buildup,
+            "Volume": f"{c_vol:,}",
+            "IV": c_iv,
+            "LTP": c_ltp,
+            "Strike": strike,
+            "PCR": pcr_val,
+            "LTP (Put)": p_ltp,
+            "IV (Put)": p_iv,
+            "Volume (Put)": f"{p_vol:,}",
+            "Put Build-up": p_buildup,
+            "Chg OI (Put)": f"{c_chg_oi:,}",
+            "Puts OI": f"{p_oi:,}"
+        })
 
-        table_rows_html += f"""
-            <tr>
-                <td style="padding: 6px; border-bottom: 1px solid #dee2e6;">{c_oi:,}</td>
-                <td style="padding: 6px; border-bottom: 1px solid #dee2e6;">{c_chg_oi:,}</td>
-                <td style="padding: 6px; border-bottom: 1px solid #dee2e6;">{c_badge}</td>
-                <td style="padding: 6px; border-bottom: 1px solid #dee2e6;">{c_vol:,}</td>
-                <td style="padding: 6px; border-bottom: 1px solid #dee2e6;">{c_iv}</td>
-                <td style="padding: 6px; border-bottom: 1px solid #dee2e6;">{c_ltp}</td>
-                <td style="padding: 6px; border-bottom: 1px solid #dee2e6; background-color: #fff3cd; font-weight: bold; text-align: center;">{strike}</td>
-                <td style="padding: 6px; border-bottom: 1px solid #dee2e6;">{pcr_val}</td>
-                <td style="padding: 6px; border-bottom: 1px solid #dee2e6;">{p_ltp}</td>
-                <td style="padding: 6px; border-bottom: 1px solid #dee2e6;">{p_iv}</td>
-                <td style="padding: 6px; border-bottom: 1px solid #dee2e6;">{p_vol:,}</td>
-                <td style="padding: 6px; border-bottom: 1px solid #dee2e6;">{p_badge}</td>
-                <td style="padding: 6px; border-bottom: 1px solid #dee2e6;">{p_chg_oi:,}</td>
-                <td style="padding: 6px; border-bottom: 1px solid #dee2e6;">{p_oi:,}</td>
-            </tr>
-        """
+    df_option = pd.DataFrame(table_data)
 
-    # Render custom clean HTML Table
-    final_table_html = f"""
-    <div style="max-height: 520px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 5px;">
-    <table style="width: 100%; text-align: right; font-size: 13px; border-collapse: collapse; background-color: white; color: black;">
-        <thead>
-            <tr style="background-color: #f8f9fa; color: #333; position: sticky; top: 0; z-index: 1;">
-                <th style="padding: 8px; text-align: right;">Calls OI</th>
-                <th style="padding: 8px; text-align: right;">Chg OI</th>
-                <th style="padding: 8px; text-align: right;">Build-up</th>
-                <th style="padding: 8px; text-align: right;">Volume</th>
-                <th style="padding: 8px; text-align: right;">IV</th>
-                <th style="padding: 8px; text-align: right;">LTP</th>
-                <th style="padding: 8px; text-align: center; background-color: #e9ecef;">Strike</th>
-                <th style="padding: 8px; text-align: right;">PCR</th>
-                <th style="padding: 8px; text-align: right;">LTP (Put)</th>
-                <th style="padding: 8px; text-align: right;">IV (Put)</th>
-                <th style="padding: 8px; text-align: right;">Volume (Put)</th>
-                <th style="padding: 8px; text-align: right;">Build-up</th>
-                <th style="padding: 8px; text-align: right;">Chg OI</th>
-                <th style="padding: 8px; text-align: right;">Puts OI</th>
-            </tr>
-        </thead>
-        <tbody>
-            {table_rows_html}
-        </tbody>
-    </table>
-    </div>
-    """
-    st.markdown(final_table_html, unsafe_allow_html=True)
+    # Styling function to color LB (Green) and SB (Red) cleanly
+    def highlight_buildup(val):
+        if val == "LB":
+            return 'background-color: #d4edda; color: #155724; font-weight: bold;'
+        elif val == "SB":
+            return 'background-color: #f8d7da; color: #721c24; font-weight: bold;'
+        elif val == "SC":
+            return 'background-color: #cce5ff; color: #004085; font-weight: bold;'
+        elif val == "LU":
+            return 'background-color: #fff3cd; color: #856404; font-weight: bold;'
+        return ''
+
+    styled_df = df_option.style.applymap(highlight_buildup, subset=['Call Build-up', 'Put Build-up'])
+    
+    st.dataframe(styled_df, use_container_width=True, height=520)
 
     # Auto-refresh logic implementation (Default 30 sec)
     if auto_refresh != "Off":
