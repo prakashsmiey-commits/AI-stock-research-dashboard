@@ -10,44 +10,40 @@ st.set_page_config(page_title="AI Stock & Market Intelligence Dashboard", layout
 # Custom CSS for Professional Terminal & Blinking Effect
 st.markdown("""
 <style>
-    .terminal-header {
-        background-color: #1e222d;
-        padding: 10px;
-        border-radius: 5px;
-        color: white;
-        font-weight: bold;
-    }
     @keyframes blink {
         0% { opacity: 1; }
-        50% { opacity: 0.4; }
+        50% { opacity: 0.3; }
         100% { opacity: 1; }
+    }
     .blink-lb {
         background-color: #d4edda;
         color: #155724;
-        padding: 3px 6px;
+        padding: 2px 6px;
         border-radius: 4px;
         font-weight: bold;
-        animation: blink 1.5s infinite;
+        animation: blink 1.2s infinite;
+        display: inline-block;
     }
     .blink-sb {
         background-color: #f8d7da;
         color: #721c24;
-        padding: 3px 6px;
+        padding: 2px 6px;
         border-radius: 4px;
         font-weight: bold;
-        animation: blink 1.5s infinite;
+        animation: blink 1.2s infinite;
+        display: inline-block;
     }
     .badge-sc {
         background-color: #cce5ff;
         color: #004085;
-        padding: 3px 6px;
+        padding: 2px 6px;
         border-radius: 4px;
         font-weight: bold;
     }
     .badge-lu {
         background-color: #fff3cd;
         color: #856404;
-        padding: 3px 6px;
+        padding: 2px 6px;
         border-radius: 4px;
         font-weight: bold;
     }
@@ -331,7 +327,7 @@ else:
     st.markdown("### 📊 Strike-wise Call & Put Build-up Matrix (Live Blinking Signals)")
     
     atm = round(spot_price / 50) * 50
-    table_html_rows = []
+    table_rows_html = ""
     import random
     
     for i in range(-strikes_range, strikes_range + 1):
@@ -351,58 +347,57 @@ else:
         p_ltp = round(max(5.0, (strike - spot_price) + random.uniform(100, 500)), 2)
         pcr_val = round(p_oi / (c_oi if c_oi > 0 else 1), 2)
 
-        # HTML formatting with blinking CSS classes for LB and SB
         c_badge = f'<span class="blink-lb">LB</span>' if c_buildup == "LB" else f'<span class="badge-sc">SC</span>'
         p_badge = f'<span class="blink-sb">SB</span>' if p_buildup == "SB" else f'<span class="badge-lu">LU</span>'
 
-        table_html_rows.append(f"""
+        table_rows_html += f"""
             <tr>
-                <td>{c_oi:,}</td>
-                <td>{c_chg_oi:,}</td>
-                <td>{c_badge}</td>
-                <td>{c_vol:,}</td>
-                <td>{c_iv}</td>
-                <td>{c_ltp}</td>
-                <td style="background-color: #fff3cd; font-weight: bold; text-align: center;">{strike}</td>
-                <td>{pcr_val}</td>
-                <td>{p_ltp}</td>
-                <td>{p_iv}</td>
-                <td>{p_vol:,}</td>
-                <td>{p_badge}</td>
-                <td>{p_chg_oi:,}</td>
-                <td>{p_oi:,}</td>
+                <td style="padding: 6px; border-bottom: 1px solid #dee2e6;">{c_oi:,}</td>
+                <td style="padding: 6px; border-bottom: 1px solid #dee2e6;">{c_chg_oi:,}</td>
+                <td style="padding: 6px; border-bottom: 1px solid #dee2e6;">{c_badge}</td>
+                <td style="padding: 6px; border-bottom: 1px solid #dee2e6;">{c_vol:,}</td>
+                <td style="padding: 6px; border-bottom: 1px solid #dee2e6;">{c_iv}</td>
+                <td style="padding: 6px; border-bottom: 1px solid #dee2e6;">{c_ltp}</td>
+                <td style="padding: 6px; border-bottom: 1px solid #dee2e6; background-color: #fff3cd; font-weight: bold; text-align: center;">{strike}</td>
+                <td style="padding: 6px; border-bottom: 1px solid #dee2e6;">{pcr_val}</td>
+                <td style="padding: 6px; border-bottom: 1px solid #dee2e6;">{p_ltp}</td>
+                <td style="padding: 6px; border-bottom: 1px solid #dee2e6;">{p_iv}</td>
+                <td style="padding: 6px; border-bottom: 1px solid #dee2e6;">{p_vol:,}</td>
+                <td style="padding: 6px; border-bottom: 1px solid #dee2e6;">{p_badge}</td>
+                <td style="padding: 6px; border-bottom: 1px solid #dee2e6;">{p_chg_oi:,}</td>
+                <td style="padding: 6px; border-bottom: 1px solid #dee2e6;">{p_oi:,}</td>
             </tr>
-        """)
+        """
 
-    # Render custom HTML Table for real-time visual blinking
-    table_html = f"""
-    <div style="max-height: 520px; overflow-y: auto;">
-    <table style="width: 100%; text-align: right; font-size: 13px; border-collapse: collapse;">
+    # Render custom clean HTML Table
+    final_table_html = f"""
+    <div style="max-height: 520px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 5px;">
+    <table style="width: 100%; text-align: right; font-size: 13px; border-collapse: collapse; background-color: white; color: black;">
         <thead>
-            <tr style="background-color: #f1f3f5; color: #333; position: sticky; top: 0;">
-                <th style="padding: 8px;">Calls OI</th>
-                <th>Chg OI</th>
-                <th>Build-up</th>
-                <th>Volume</th>
-                <th>IV</th>
-                <th>LTP</th>
-                <th style="text-align: center; background-color: #e2e6ea;">Strike</th>
-                <th>PCR</th>
-                <th>LTP (Put)</th>
-                <th>IV (Put)</th>
-                <th>Volume (Put)</th>
-                <th>Build-up</th>
-                <th>Chg OI</th>
-                <th>Puts OI</th>
+            <tr style="background-color: #f8f9fa; color: #333; position: sticky; top: 0; z-index: 1;">
+                <th style="padding: 8px; text-align: right;">Calls OI</th>
+                <th style="padding: 8px; text-align: right;">Chg OI</th>
+                <th style="padding: 8px; text-align: right;">Build-up</th>
+                <th style="padding: 8px; text-align: right;">Volume</th>
+                <th style="padding: 8px; text-align: right;">IV</th>
+                <th style="padding: 8px; text-align: right;">LTP</th>
+                <th style="padding: 8px; text-align: center; background-color: #e9ecef;">Strike</th>
+                <th style="padding: 8px; text-align: right;">PCR</th>
+                <th style="padding: 8px; text-align: right;">LTP (Put)</th>
+                <th style="padding: 8px; text-align: right;">IV (Put)</th>
+                <th style="padding: 8px; text-align: right;">Volume (Put)</th>
+                <th style="padding: 8px; text-align: right;">Build-up</th>
+                <th style="padding: 8px; text-align: right;">Chg OI</th>
+                <th style="padding: 8px; text-align: right;">Puts OI</th>
             </tr>
         </thead>
         <tbody>
-            {"".join(table_html_rows)}
+            {table_rows_html}
         </tbody>
     </table>
     </div>
     """
-    st.markdown(table_html, unsafe_allow_html=True)
+    st.markdown(final_table_html, unsafe_allow_html=True)
 
     # Auto-refresh logic implementation (Default 30 sec)
     if auto_refresh != "Off":
