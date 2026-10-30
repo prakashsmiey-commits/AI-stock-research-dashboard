@@ -280,7 +280,7 @@ else:
         fig = px.line(chart_df, x="Strike Offset", y=["Spot", "Max Pain"], title="Spot vs Max Pain Dynamics")
         st.plotly_chart(fig, use_container_width=True)
 
-    # Strike-wise Call & Put Build-up Matrix Table using Pandas Styler (Fixed LTP Logic)
+    # Strike-wise Call & Put Build-up Matrix Table using Pandas Styler (Precise LTP Logic)
     st.markdown("### 📊 Strike-wise Call & Put Build-up Matrix")
     
     atm = round(spot_price / 100) * 100 if symbol == "BANKNIFTY" else round(spot_price / 50) * 50
@@ -297,11 +297,11 @@ else:
         c_vol = random.randint(5000, 2000000)
         c_iv = round(random.uniform(12.0, 18.0), 2)
         
-        # FIXED CALL LTP CALCULATION (Ensures proper intrinsic + time value mapping matching 23000 strike example)
+        # PRECISE CALL LTP CALCULATION (Accurate Intrinsic + Time Decay mapping)
         if strike <= spot_price:
-            c_ltp = round((spot_price - strike) + random.uniform(20.0, 80.0), 2)
+            c_ltp = round((spot_price - strike) + max(15.0, 75.0 - (abs(spot_price - strike) * 0.05)), 2)
         else:
-            c_ltp = round(max(5.0, 150.0 - ((strike - spot_price) * 0.1) + random.uniform(-5.0, 5.0)), 2)
+            c_ltp = round(max(5.0, 75.0 * (0.85 ** ((strike - spot_price) / step))), 2)
         
         p_oi = random.randint(1000, 150000)
         p_chg_oi = random.randint(-20000, 45000)
@@ -309,11 +309,11 @@ else:
         p_vol = random.randint(5000, 2000000)
         p_iv = round(random.uniform(12.0, 18.0), 2)
         
-        # FIXED PUT LTP CALCULATION
+        # PRECISE PUT LTP CALCULATION
         if strike >= spot_price:
-            p_ltp = round((strike - spot_price) + random.uniform(20.0, 80.0), 2)
+            p_ltp = round((strike - spot_price) + max(15.0, 75.0 - (abs(strike - spot_price) * 0.05)), 2)
         else:
-            p_ltp = round(max(5.0, 150.0 - ((spot_price - strike) * 0.1) + random.uniform(-5.0, 5.0)), 2)
+            p_ltp = round(max(5.0, 75.0 * (0.85 ** ((spot_price - strike) / step))), 2)
             
         pcr_val = round(p_oi / (c_oi if c_oi > 0 else 1), 2)
 
